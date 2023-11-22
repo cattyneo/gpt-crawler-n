@@ -1,58 +1,65 @@
-# GPT Crawler <!-- omit from toc -->
+# GPT Crawler
 
-Crawl a site to generate knowledge files to create your own custom GPT from one or multiple URLs
+※これは以下のリポジトリをフォークしたものです。READMEに関しては、フォーク元のものを日本語訳しております。
 
-![Gif showing the crawl run](https://github.com/BuilderIO/gpt-crawler/assets/844291/feb8763a-152b-4708-9c92-013b5c70d2f2)
+https://github.com/builderio/gpt-crawler
 
-- [Example](#example)
-- [Get started](#get-started)
-  - [Running locally](#running-locally)
-    - [Clone the repository](#clone-the-repository)
-    - [Install dependencies](#install-dependencies)
-    - [Configure the crawler](#configure-the-crawler)
-    - [Run your crawler](#run-your-crawler)
-  - [Alternative methods](#alternative-methods)
-    - [Running in a container with Docker](#running-in-a-container-with-docker)
-    - [Running as a CLI](#running-as-a-cli)
-      - [Development](#development)
-  - [Upload your data to OpenAI](#upload-your-data-to-openai)
-    - [Create a custom GPT](#create-a-custom-gpt)
-    - [Create a custom assistant](#create-a-custom-assistant)
-- [Contributing](#contributing)
+GPTクローラーは、あるURLまたは複数のURLからデータを収集し、カスタムGPT（OpenAIの自然言語処理モデル）を作成するための知識ファイルを生成するためのツールです。
 
-## Example
+![クロール実行を示すGIF](https://github.com/BuilderIO/gpt-crawler/assets/844291/feb8763a-152b-4708-9c92-013b5c70d2f2)
 
-[Here is a custom GPT](https://chat.openai.com/g/g-kywiqipmR-builder-io-assistant) that I quickly made to help answer questions about how to use and integrate [Builder.io](https://www.builder.io) by simply providing the URL to the Builder docs.
+- [GPT Crawler](#gpt-crawler)
+  - [例](#例)
+  - [始め方](#始め方)
+    - [ローカルでの実行](#ローカルでの実行)
+      - [リポジトリをクローンする](#リポジトリをクローンする)
+      - [依存関係をインストール](#依存関係をインストール)
+      - [クローラーを設定する](#クローラーを設定する)
+      - [クローラーを実行する](#クローラーを実行する)
+    - [別の方法](#別の方法)
+      - [Dockerを使ってコンテナで実行する](#dockerを使ってコンテナで実行する)
+    - [OpenAIにデータをアップロードする](#openaiにデータをアップロードする)
+      - [カスタムGPTを作成する](#カスタムgptを作成する)
+      - [カスタムアシスタントを作成する](#カスタムアシスタントを作成する)
+  - [Contributing](#contributing)
 
-This project crawled the docs and generated the file that I uploaded as the basis for the custom GPT.
+## 例
 
-[Try it out yourself](https://chat.openai.com/g/g-kywiqipmR-builder-io-assistant) by asking questions about how to integrate Builder.io into a site.
+[こちらはカスタムGPT](https://chat.openai.com/g/g-kywiqipmR-builder-io-assistant)です。Builder.ioのドキュメントにあるURLを提供するだけで、[Builder.io](https://www.builder.io)の使い方や統合方法についての質問に答えるのを速やかに手伝ってくれます。
 
-> Note that you may need a paid ChatGPT plan to access this feature
+このプロジェクトはドキュメントをクロールし、カスタムGPTに入力可能なファイルを出力します。
 
-## Get started
+[自分でも試してみましょう](https://chat.openai.com/g/g-kywiqipmR-builder-io-assistant)。サイトにBuilder.ioを統合する方法について質問してください。
 
-### Running locally
+> この機能にアクセスするには有料のChatGPTプランが必要な場合があります。
 
-#### Clone the repository
+## 始め方
 
-Be sure you have Node.js >= 16 installed.
+### ローカルでの実行
+
+#### リポジトリをクローンする
+
+Node.js >= 16がインストールされていることを確認してください。
 
 ```sh
 git clone https://github.com/builderio/gpt-crawler
 ```
 
-#### Install dependencies
+#### 依存関係をインストール
 
 ```sh
 npm i
 ```
+もしくは
+```sh
+npm install
+```
 
-#### Configure the crawler
+#### クローラーを設定する
 
-Open [config.ts](config.ts) and edit the `url` and `selectors` properties to match your needs.
+[config.ts](config.ts) を開いて、プロパティを変更してください。
 
-E.g. to crawl the Builder.io docs to make our custom GPT you can use:
+例えば、カスタムGPTを作成するためにBuilder.ioのドキュメントをクロールするには、次のように設定を書きます。
 
 ```ts
 export const defaultConfig: Config = {
@@ -64,63 +71,95 @@ export const defaultConfig: Config = {
 };
 ```
 
-See [config.ts](src/config.ts) for all available options. Here is a sample of the common configu options:
-
 ```ts
-type Config = {
-  /** URL to start the crawl */
-  url: string;
-  /** Pattern to match against for links on a page to subsequently crawl */
-  match: string;
-  /** Selector to grab the inner text from */
-  selector: string;
-  /** Don't crawl more than this many pages */
-  maxPagesToCrawl: number;
-  /** File name for the finished data */
-  outputFileName: string;
+export const defaultConfig: Config = {
+  url: "https://www.builder.io/c/docs/developers",
+  match: "https://www.builder.io/c/docs/**",
+  maxPagesToCrawl: 50,
+  outputFileName: "output.json",
+  waitTime: 1000,
+  onVisitPage: async ({ visitPageWaitTime }) => {
+    await new Promise(resolve => setTimeout(resolve, visitPageWaitTime ?? 1000));
+  },
+  userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 };
 ```
 
-#### Run your crawler
+利用可能なすべてのオプションについて説明します。
+
+```ts
+type Config = {
+  // クロールを開始するURL
+  url: string;
+  // このパターンに一致するリンクのみをクロール対象とする
+  match: string | string[];
+  // このセレクタで指定された要素からインナーテキストを取得する
+  selector: string;
+  // 最大でこの数のページをクロールする
+  maxPagesToCrawl: number;
+  // クロール結果を保存するファイル名
+  outputFileName: string;
+  // 必要に応じて設定されるクッキー
+  cookie?: { name: string; value: string };
+  // 各ページ訪問時に実行されるオプショナルな関数
+  onVisitPage?: (options: {
+    page: Page;
+    pushData: (data: any) => Promise<void>;
+    visitPageWaitTime?: number;
+  }) => Promise<void>;
+  // セレクタが表示されるまで待機するオプショナルなタイムアウト
+  waitForSelectorTimeout?: number;
+    // 使用するオプショナルなユーザーエージェント
+  userAgent?: string;
+  // 各ページの読み込み間のオプショナルな待ち時間
+  waitTime?: number;
+};
+```
+
+#### クローラーを実行する
 
 ```sh
 npm start
 ```
+もしくは
+```sh
+npm run start:cross-env
+```
 
-### Alternative methods
+### 別の方法
 
-#### [Running in a container with Docker](./containerapp/README.md)
+#### [Dockerを使ってコンテナで実行する](./containerapp/README.md)
 
-To obtain the `output.json` with a containerized execution. Go into the `containerapp` directory. Modify the `config.ts` same as above, the `output.json`file should be generated in the data folder. Note : the `outputFileName` property in the `config.ts` file in containerapp folder is configured to work with the container.
+`output.json` をコンテナ化された実行で得るには、`containerapp` ディレクトリに移動します。上記と同じように `config.ts` を修正し、`data` フォルダに `output.json` ファイルが生成されるはずです。注：`containerapp` フォルダ内の `config.ts` ファイルにある `outputFileName` プロパティは、コンテナで動作するように設定されています。
 
-### Upload your data to OpenAI
+### OpenAIにデータをアップロードする
 
-The crawl will generate a file called `output.json` at the root of this project. Upload that [to OpenAI](https://platform.openai.com/docs/assistants/overview) to create your custom assistant or custom GPT.
+クロールはこのプロジェクトのルートに `output.json` というファイルを生成します。それを[OpenAIにアップロード](https://platform.openai.com/docs/assistants/overview)して、カスタムアシスタントやカスタムGPTを作成します。
 
-#### Create a custom GPT
+#### カスタムGPTを作成する
 
-Use this option for UI access to your generated knowledge that you can easily share with others
+生成された知識にUIでアクセスし、他の人と簡単に共有できるオプションを使用します
 
-> Note: you may need a paid ChatGPT plan to create and use custom GPTs right now
+> 注：現在カスタムGPTを作成して使用するには、有料のChatGPTプランが必要な場合があります。
 
-1. Go to [https://chat.openai.com/](https://chat.openai.com/)
-2. Click your name in the bottom left corner
-3. Choose "My GPTs" in the menu
-4. Choose "Create a GPT"
-5. Choose "Configure"
-6. Under "Knowledge" choose "Upload a file" and upload the file you generated
+1. [https://chat.openai.com/](https://chat.openai.com/) にアクセスします。
+2. 左下隅にあるあなたの名前をクリックします。
+3. メニューから「My GPTs」を選択します。
+4. 「Create a GPT」を選択します。
+5. 「Configure」を選択します。
+6. 「Knowledge」の下で「Upload a file」を選択し、生成したファイルをアップロードします。
 
-![Gif of how to upload a custom GPT](https://github.com/BuilderIO/gpt-crawler/assets/844291/22f27fb5-6ca5-4748-9edd-6bcf00b408cf)
+![カスタムGPTをアップロードする方法のGIF](https://github.com/BuilderIO/gpt-crawler/assets/844291/22f27fb5-6ca5-4748-9edd-6bcf00b408cf)
 
-#### Create a custom assistant
+#### カスタムアシスタントを作成する
 
-Use this option for API access to your generated knowledge that you can integrate into your product.
+生成した知識にAPIアクセスし、製品に統合できるこのオプションを使用します。
 
-1. Go to [https://platform.openai.com/assistants](https://platform.openai.com/assistants)
-2. Click "+ Create"
-3. Choose "upload" and upload the file you generated
+1. [https://platform.openai.com/assistants](https://platform.openai.com/assistants) にアクセスします。
+2. "+ Create" をクリックします。
+3. "upload" を選択して、生成したファイルをアップロードします。
 
-![Gif of how to upload to an assistant](https://github.com/BuilderIO/gpt-crawler/assets/844291/06e6ad36-e2ba-4c6e-8d5a-bf329140de49)
+![アシスタントへのアップロード方法のGIF](https://github.com/BuilderIO/gpt-crawler/assets/844291/06e6ad36-e2ba-4c6e-8d5a-bf329140de49)
 
 ## Contributing
 
@@ -137,3 +176,5 @@ Know how to make this project better? Send a PR!
        </picture>
    </a>
 </p>
+
+また、このリポジトリのフォーク元である、Builder.ioの開発者の方々に感謝します。
