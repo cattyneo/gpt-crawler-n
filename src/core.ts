@@ -89,7 +89,7 @@ export async function crawl(config: Config) {
         await pushData({ title, url: request.loadedUrl, html });
 
         if (config.onVisitPage) {
-          await config.onVisitPage({ page, pushData });
+          await config.onVisitPage({ page, pushData, visitPageWaitTime: config.waitTime });
         }
 
         // Extract links from the current page
@@ -98,6 +98,10 @@ export async function crawl(config: Config) {
           globs:
             typeof config.match === "string" ? [config.match] : config.match,
         });
+      },
+      launchContext: {
+        useIncognitoPages: true,
+        userAgent: config.userAgent,
       },
       // Comment this option to scrape the full website.
       maxRequestsPerCrawl: config.maxPagesToCrawl,

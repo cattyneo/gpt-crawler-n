@@ -35,7 +35,13 @@ export type Config = {
   onVisitPage?: (options: {
     page: Page;
     pushData: (data: any) => Promise<void>;
+    visitPageWaitTime?: number;
   }) => Promise<void>;
   /** Optional timeout for waiting for a selector to appear */
   waitForSelectorTimeout?: number;
+
+  /** Optional user agent to use */
+  userAgent?: string;
+  /** Optional wait time between each page load */
+  waitTime?: number;
 };
