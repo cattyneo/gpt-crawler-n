@@ -109,7 +109,7 @@ type Config = {
   }) => Promise<void>;
   // セレクタが表示されるまで待機するオプショナルなタイムアウト
   waitForSelectorTimeout?: number;
-    // 使用するオプショナルなユーザーエージェント
+  // 使用するオプショナルなユーザーエージェント
   userAgent?: string;
   // 各ページの読み込み間のオプショナルな待ち時間
   waitTime?: number;

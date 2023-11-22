@@ -9,5 +9,4 @@ export const defaultConfig: Config = {
   onVisitPage: async ({ visitPageWaitTime }) => {
     await new Promise(resolve => setTimeout(resolve, visitPageWaitTime ?? 1000));
   },
-  userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 };
