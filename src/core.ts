@@ -104,7 +104,7 @@ export async function crawl(config: Config) {
         userAgent: config.userAgent,
       },
       // Comment this option to scrape the full website.
-      maxRequestsPerCrawl: config.maxPagesToCrawl,
+      // maxRequestsPerCrawl: config.maxPagesToCrawl,
       // Uncomment this option to see the browser window.
       // headless: false,
     });
