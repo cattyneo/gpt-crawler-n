@@ -1,5 +1,5 @@
 // For more information, see https://crawlee.dev/
-import { PlaywrightCrawler } from "crawlee";
+import { PlaywrightCrawler, Dataset } from "crawlee";
 import { readFile, writeFile } from "fs/promises";
 import { glob } from "glob";
 import { Config } from "./config.js";
@@ -23,7 +23,7 @@ export function getPageHtml(page: Page, selector = "body") {
     } else {
       // Handle as a CSS selector
       const el = document.querySelector(selector) as HTMLElement | null;
-      return el?.innerText || "";
+      return el?.innerHTML || "";
     }
   }, selector);
 }
@@ -62,7 +62,7 @@ export async function crawl(config: Config) {
           await page.context().addCookies([cookie]);
         }
 
-        const title = await page.title();
+        //const title = await page.title();
         pageCounter++;
         log.info(
           `Crawling: Page ${pageCounter} / ${config.maxPagesToCrawl} - URL: ${request.loadedUrl}...`
@@ -83,10 +83,10 @@ export async function crawl(config: Config) {
           }
         }
 
-        const html = await getPageHtml(page, config.selector);
+        //const html = await getPageHtml(page, config.selector);
 
         // Save results as JSON to ./storage/datasets/default
-        await pushData({ title, url: request.loadedUrl, html });
+        // await pushData({ title, url: request.loadedUrl, html });
 
         if (config.onVisitPage) {
           await config.onVisitPage({ page, pushData, visitPageWaitTime: config.waitTime });
@@ -98,6 +98,14 @@ export async function crawl(config: Config) {
           globs:
             typeof config.match === "string" ? [config.match] : config.match,
         });
+      },
+      async failedRequestHandler({ request }) {
+          // This function is called when the crawling of a request failed too many times
+          await Dataset.pushData({
+              url: request.url,
+              succeeded: false,
+              errors: request.errorMessages,
+          })
       },
       launchContext: {
         useIncognitoPages: true,
